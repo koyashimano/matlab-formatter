@@ -15,11 +15,12 @@ After installation, you can use `matlabformatter` command from anywhere.
 ## Usage
 
 ```bash
-matlabformatter <path-to-file> [options...]
+matlabformatter [options...] <path-to-file>
 ```
 
 ### Options
 
+- `-w` - Write result to source file instead of stdout (default: false)
 - `--startLine=int` - Start line (1-based, default: 1)
 - `--endLine=int` - End line (inclusive, 0 for end of file, default: 0)
 - `--indentWidth=int` - Number of spaces per indentation level (default: 4)
@@ -30,16 +31,22 @@ matlabformatter <path-to-file> [options...]
 
 ### Examples
 
-Format a MATLAB file:
+Format a MATLAB file (outputs to stdout):
 
 ```bash
 matlabformatter myfile.m
 ```
 
+Format and update the file in place:
+
+```bash
+matlabformatter -w myfile.m
+```
+
 Format with custom indent width:
 
 ```bash
-matlabformatter myfile.m --indentWidth=2
+matlabformatter -w --indentWidth=2 myfile.m
 ```
 
 Read from standard input:
@@ -51,7 +58,7 @@ cat myfile.m | matlabformatter -
 Format specific lines:
 
 ```bash
-matlabformatter myfile.m --startLine=10 --endLine=50
+matlabformatter --startLine=10 --endLine=50 myfile.m
 ```
 
 ## Development
@@ -97,5 +104,5 @@ go vet ./...
 For development, you can run directly:
 
 ```bash
-go run ./cmd/matlabformatter <path-to-file> [options...]
+go run ./cmd/matlabformatter [options...] <path-to-file>
 ```
