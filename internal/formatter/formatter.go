@@ -653,10 +653,10 @@ func readLines(r io.Reader) ([]string, error) {
 	content = strings.ReplaceAll(content, "\r", "\n")
 	lines := strings.Split(content, "\n")
 
-	if len(lines) > 0 && lines[len(lines)-1] == "" {
-		if !strings.HasSuffix(content, "\n") {
-			lines = lines[:len(lines)-1]
-		}
+	// strings.Split always adds an empty string after a trailing delimiter.
+	// Remove it to avoid outputting an extra newline, except for empty files.
+	if len(lines) > 1 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
 	}
 
 	return lines, nil
