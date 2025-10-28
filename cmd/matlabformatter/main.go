@@ -25,7 +25,7 @@ func main() {
 	addSpaces := fs.String("addSpaces", opts.AddSpaces, "Operator spacing: all_operators, exclude_pow, no_spaces")
 	matrixIndent := fs.String("matrixIndent", opts.MatrixIndent, "Matrix indentation: aligned, simple")
 
-	filename, err := parseFilename(fs, os.Args[1:])
+	filenames, err := parseFilenames(fs, os.Args[1:])
 	if err != nil {
 		if errors.Is(err, errMissingFilename) {
 			printUsage()
@@ -51,35 +51,47 @@ func main() {
 		os.Exit(1)
 	}
 
-	// If -w flag is set and not reading from stdin, write to file
-	if *write && filename != "-" {
-		var buf bytes.Buffer
-		if err := f.FormatFile(filename, &buf); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+	// Process each file
+	hasError := false
+	for _, filename := range filenames {
+		// If -w flag is set and not reading from stdin, write to file
+		if *write && filename != "-" {
+			var buf bytes.Buffer
+			if err := f.FormatFile(filename, &buf); err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %v\n", filename, err)
+				hasError = true
+				continue
+			}
 
-		// Write to file with same permissions as original
-		info, err := os.Stat(filename)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+			// Write to file with same permissions as original
+			info, err := os.Stat(filename)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %v\n", filename, err)
+				hasError = true
+				continue
+			}
 
-		if err := os.WriteFile(filename, buf.Bytes(), info.Mode()); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			if err := os.WriteFile(filename, buf.Bytes(), info.Mode()); err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %v\n", filename, err)
+				hasError = true
+				continue
+			}
+		} else {
+			if err := f.FormatFile(filename, os.Stdout); err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %v\n", filename, err)
+				hasError = true
+				continue
+			}
 		}
-	} else {
-		if err := f.FormatFile(filename, os.Stdout); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+	}
+
+	if hasError {
+		os.Exit(1)
 	}
 }
 
 func printUsage() {
-	fmt.Fprintf(os.Stderr, "usage: matlabformatter [options...] filename\n")
+	fmt.Fprintf(os.Stderr, "usage: matlabformatter [options...] <file...>\n")
 	fmt.Fprintf(os.Stderr, "  OPTIONS:\n")
 	fmt.Fprintf(os.Stderr, "    -w (default false) - Write result to source file instead of stdout\n")
 	opts := formatter.DefaultOptions()
@@ -92,18 +104,19 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "    --matrixIndent=string (default %s)\n", opts.MatrixIndent)
 }
 
-func parseFilename(fs *flag.FlagSet, args []string) (string, error) {
+func parseFilenames(fs *flag.FlagSet, args []string) ([]string, error) {
 	if err := fs.Parse(args); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if fs.NArg() == 0 {
-		return "", errMissingFilename
+		return nil, errMissingFilename
 	}
 
-	if fs.NArg() > 1 {
-		return "", fmt.Errorf("too many arguments")
+	filenames := make([]string, fs.NArg())
+	for i := 0; i < fs.NArg(); i++ {
+		filenames[i] = fs.Arg(i)
 	}
 
-	return fs.Arg(0), nil
+	return filenames, nil
 }

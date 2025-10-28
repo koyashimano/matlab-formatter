@@ -15,7 +15,7 @@ After installation, you can use `matlabformatter` command from anywhere.
 ## Usage
 
 ```bash
-matlabformatter [options...] <path-to-file>
+matlabformatter [options...] <file...>
 ```
 
 ### Options
@@ -61,6 +61,12 @@ Format specific lines:
 matlabformatter --startLine=10 --endLine=50 myfile.m
 ```
 
+Format multiple files:
+
+```bash
+matlabformatter -w file1.m file2.m file3.m
+```
+
 ## Development
 
 ### Build
@@ -104,5 +110,5 @@ go vet ./...
 For development, you can run directly:
 
 ```bash
-go run ./cmd/matlabformatter [options...] <path-to-file>
+go run ./cmd/matlabformatter [options...] <file...>
 ```
